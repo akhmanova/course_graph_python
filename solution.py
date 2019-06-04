@@ -17,6 +17,8 @@ class Graph:
     __v_idx_to_name = {}
     # oriented flag
     __oriented = False
+    # weight flag
+    __weight = False
 
     # GRAPH CONSTRUCTOR
     #
@@ -31,7 +33,7 @@ class Graph:
     #      g = Graph(
     #           n=<number of vertices>,
     #           m=<number of edges>,
-    #           adj=<adjacency list [(1, 2), (3, 4)]>,
+    #           adj=<adjacency list [(1, 2, -1), (3, 4, 0)]>,
     #           names_adj=<adjacency list of names [('apple', 'pear')]>,
     #           v_name_to_idx=<{'apple'=1, 'pear'=2}>
     #           v_idx_to_name=<{1='apple', 2='pear'}>
@@ -113,25 +115,38 @@ class Graph:
     def set_adj(self, adj):
         try:
             adj = list(adj)
-            for (i, j) in adj:
-                if i < 0 or j < 0 or type(i) != int or type(j) != int:
-                    raise Exception
+            if len(adj > 0) and len(adj[0]) == 3 or self.__weight:
+                for (i, j, v) in adj:
+                    if i < 0 or j < 0 or type(i) != int or type(j) != int or type(v) != int:
+                        raise Exception
+            elif len(adj > 0) and len(adj[0]) == 2:
+                for (i, j) in adj:
+                    if i < 0 or j < 0 or type(i) != int or type(j) != int:
+                        raise Exception
         except Exception:
             return False
         self.__m = len(adj)
         self.__n = 0
         self.__adj = []
-        for (i, j) in adj:
-            self.__adj.append((i, j))
-            if not self.__oriented:
-                self.__adj.append((j, i))
+        if len(adj > 0) and len(adj[0]) == 3:
+            self.__weight = True
+        if self.__weight:
+            for (i, j, v) in adj:
+                self.__adj.append((i, j, v))
+                if not self.__oriented:
+                    self.__adj.append((j, i, v))
+        else:
+            for (i, j) in adj:
+                self.__adj.append((i, j))
+                if not self.__oriented:
+                    self.__adj.append((j, i))
         return True
 
     def set_names_adj(self, names_adj):
         try:
             names_adj = list(names_adj)
             for i in names_adj:
-                if type(i) != tuple or len(i) != 2:
+                if type(i) != tuple or len(i) != 3:
                     raise Exception
         except Exception:
             return False
@@ -161,14 +176,89 @@ class Graph:
                 self.__adj.append((idx_j, idx_i))
         return True
 
-    def set_v_name_to_idx(self):
-        return self.__v_name_to_idx
+    def set_v_name_to_idx(self, v_name_to_idx):
+        temp_dict = {}
+        if type(v_name_to_idx) is not dict:
+            return False
+        try:
+            for name, idx in v_name_to_idx.items():
+                temp_dict[name] = idx
+            for name, idx in temp_dict.items():
+                self.__v_name_to_idx[name] = idx
+                self.__v_idx_to_name[idx] = name
+            self.__n = max(self.__n, len(self.__v_name_to_idx), len(self.__v_idx_to_name))
+            return True
+        except:
+            return False
+        return True
 
-    def set_v_idx_to_name(self):
-        return self.__v_idx_to_name
 
-    def set_oriented(self):
-        return self.__oriented
+    def set_v_idx_to_name(self, v_idx_to_name):
+        temp_dict = {}
+        if type(v_idx_to_name) is not dict:
+            return False
+        try:
+            for idx, name in v_idx_to_name.items():
+                temp_dict[idx] = name
+            for idx in temp_dict.items():
+                self.__v_idx_to_name[idx] = name
+                self.__v_name_to_idx[name] = idx
+            self.__n = max(self.__n, len(self.__v_name_to_idx), len(self.__v_idx_to_name))
+            return True
+        except:
+            return False
+
+    def set_oriented(self, oriented):
+        self.__oriented = oriented
+    
+    def set_weight(self, weight):
+        old_weight = self.__weight
+        if type(weight) != bool:
+            return False
+        try:
+            if old_weight != weight:
+                temp_adj = []
+                self.__weight = weight
+                if self.__weight:
+                    for (i, j) in self.__adj:
+                        temp_adj.append(i, j, 0)
+                else:
+                    for (i, j, v) in self.__adj:
+                        temp_adj.append(i, j)
+                self.__adj = deepcopy(temp_adj)
+            return True
+        except:
+            return False
+    
+    def add_edge(self, edge):
+        if type(edge) != tuple:
+            return False
+        try:
+            if len(edge) == 3 and not self.__weight:
+                self.set_weight = True
+            for i, e in edge:
+                if i < 2 and (type(e) != int or type(e) != str):
+                    raise Exception
+                elif i == 2 and (type(e) != int or type(e) != float):
+                    raise Exception
+            if type(edge[0]) == int and type(edge[1]) == int:
+                self.__n = max(self.__n, edge[0], edge[1])
+            self.__adj.append(edge)
+            return True
+        except:
+            return False
+
+    def add_vertex(self, v):
+        if type(v) != int or type(v) != str:
+            return False
+        if type(v) == int:
+            self.__n = max(v, self.__n)
+        if type(v) == str:
+            if not v in self.__v_name_to_idx:
+                self.__v_idx_to_name[n] = v
+                self.__v_name_to_idx[v] = n
+                n += 1
+        
 
 
 g = Graph(n=2, m=2, adj=[(0, 1), (1,0)])
