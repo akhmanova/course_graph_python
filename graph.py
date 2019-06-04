@@ -9,8 +9,8 @@ class Graph:
     __m = 0
     # list of adjacency (idx)
     __adj = []
-    # list of adjacency (names)
-    __names_adj = []
+    # list of edges (idx)
+    __edges = []
     # dict from v.name to v.index
     __v_name_to_idx = {}
     # dict from v.index to v.name
@@ -34,7 +34,7 @@ class Graph:
     #           n=<number of vertices>,
     #           m=<number of edges>,
     #           adj=<adjacency list [(1, 2, -1), (3, 4, 0)]>,
-    #           names_adj=<adjacency list of names [('apple', 'pear')]>,
+    #           edges=<edges list [(1, 2, -1), (3, 4, 0)]>,
     #           v_name_to_idx=<{'apple'=1, 'pear'=2}>
     #           v_idx_to_name=<{1='apple', 2='pear'}>
     #           oriented=<False or True>
@@ -45,7 +45,7 @@ class Graph:
             self.__n = deepcopy(kwargs.original_graph.n)
             self.__m = deepcopy(kwargs.original_graph.m)
             self.__adj = deepcopy(kwargs.original_graph.adj)
-            self.__names_adj = deepcopy(kwargs.original_graph.names_adj)
+            self.__edges = deepcopy(kwargs.original_graph.edges)
             self.__v_name_to_idx = deepcopy(kwargs.original_graph.v_name_to_idx)
             self.__v_idx_to_name = deepcopy(kwargs.original_graph.v_idx_to_name)
             print ("A class was created from the sample!")
@@ -57,8 +57,8 @@ class Graph:
             self.__m = deepcopy(kwargs.get('m'))
         if 'adj' in kwargs:
             self.__adj = deepcopy(kwargs.get('adj'))
-        if 'names_adj' in kwargs:
-            self.__names_adj = deepcopy(kwargs.get('names_adj'))
+        if 'edges' in kwargs:
+            self.__edges = deepcopy(kwargs.get('edges'))
         if 'v_name_to_idx' in kwargs:
             self.__v_name_to_idx = deepcopy(kwargs.get('v_name_to_idx'))
         if 'v_idx_to_name' in kwargs:
@@ -77,8 +77,8 @@ class Graph:
     def get_adj(self):
         return self.__adj
 
-    def get_names_adj(self):
-        return self.__names_adj
+    def get_edges(self):
+        return self.__edges
 
     def get_v_name_to_idx(self):
         return self.__v_name_to_idx
@@ -112,68 +112,28 @@ class Graph:
         self.__m = deepcopy(m)
         return True
 
-    def set_adj(self, adj):
+    def set_edges(self, adj):
         try:
             adj = list(adj)
-            if len(adj > 0) and len(adj[0]) == 3 or self.__weight:
+            if len(adj) > 0 and len(adj[0]) == 3 or self.__weight:
                 for (i, j, v) in adj:
                     if i < 0 or j < 0 or type(i) != int or type(j) != int or type(v) != int:
                         raise Exception
-            elif len(adj > 0) and len(adj[0]) == 2:
+            elif len(adj) > 0 and len(adj[0]) == 2:
                 for (i, j) in adj:
                     if i < 0 or j < 0 or type(i) != int or type(j) != int:
                         raise Exception
         except Exception:
             return False
-        self.__m = len(adj)
+        self.__m = 0
         self.__n = 0
         self.__adj = []
-        if len(adj > 0) and len(adj[0]) == 3:
-            self.__weight = True
-        if self.__weight:
-            for (i, j, v) in adj:
-                self.__adj.append((i, j, v))
-                if not self.__oriented:
-                    self.__adj.append((j, i, v))
-        else:
-            for (i, j) in adj:
-                self.__adj.append((i, j))
-                if not self.__oriented:
-                    self.__adj.append((j, i))
-        return True
+        self.__edges = []
 
-    def set_names_adj(self, names_adj):
-        try:
-            names_adj = list(names_adj)
-            for i in names_adj:
-                if type(i) != tuple or len(i) != 3:
-                    raise Exception
-        except Exception:
-            return False
-        self.__m = len(names_adj)
-        self.__n = 0
-        self.__names_adj = []
-        self.__adj = []
-        for (i, j) in names_adj:
-            if i in self.__v_name_to_idx:
-                idx_i = self.__v_name_to_idx[i]
-            else:
-                idx_i = self.__n
-                self.__n += 1
-                self.__v_name_to_idx[i] = idx_i
-                self.__v_idx_to_name[idx_i] = i
-            if j in self.__v_name_to_idx:
-                idx_j = self.__v_name_to_idx[j]
-            else:
-                idx_j = self.__n
-                self.__n += 1
-                self.__v_name_to_idx[j] = idx_j
-                self.__v_idx_to_name[idx_j] = j
-            self.__names_adj.append((i, j))
-            self.__adj.append((idx_i, idx_j))
-            if not self.__oriented:
-                self.__names_adj.append((j, i))
-                self.__adj.append((idx_j, idx_i))
+        for i in adj:
+            result = self.add_edge(i)
+            if not result:
+                return False
         return True
 
     def set_v_name_to_idx(self, v_name_to_idx):
@@ -191,7 +151,6 @@ class Graph:
         except:
             return False
         return True
-
 
     def set_v_idx_to_name(self, v_idx_to_name):
         temp_dict = {}
@@ -235,15 +194,41 @@ class Graph:
             return False
         try:
             if len(edge) == 3 and not self.__weight:
-                self.set_weight = True
-            for i, e in edge:
-                if i < 2 and (type(e) != int or type(e) != str):
-                    raise Exception
-                elif i == 2 and (type(e) != int or type(e) != float):
-                    raise Exception
-            if type(edge[0]) == int and type(edge[1]) == int:
-                self.__n = max(self.__n, edge[0], edge[1])
-            self.__adj.append(edge)
+                self.set_weight(True)
+
+            if type(edge[0]) == int:
+                i = edge[0]
+            else:
+                if not edge[0] in self.__v_name_to_idx:
+                    self.__v_name_to_idx[edge[0]] = self.__n
+                    self.__v_idx_to_name[self.__n] = edge[0]
+                    self.__n += 1
+                i = self.__v_name_to_idx[edge[0]]
+            if type(edge[1]) == int:
+                j = edge[1]
+            else:
+                if not edge[1] in self.__v_name_to_idx:
+                    self.__v_name_to_idx[edge[1]] = self.__n
+                    self.__v_idx_to_name[self.__n] = edge[1]
+                    self.__n += 1
+                j = self.__v_name_to_idx[edge[1]]
+            if len(edge) == 2:
+                idx_edge = (i, j)
+            else:
+                idx_edge = (i, j, edge[2])
+
+            self.__n = max(self.__n, idx_edge[0] + 1, idx_edge[1] + 1)
+            self.__adj.append(idx_edge)
+            self.__edges.append(idx_edge)
+            self.__m += 1
+            if not self.__oriented:
+                if len(idx_edge) == 3:
+                    revert_edge = (idx_edge[1], idx_edge[0], idx_edge[2])
+                else:
+                    revert_edge = (idx_edge[1], idx_edge[0])
+                self.__adj.append(revert_edge)
+            self.add_vertex(idx_edge[0])
+            self.add_vertex(idx_edge[1])
             return True
         except:
             return False
@@ -255,25 +240,68 @@ class Graph:
             self.__n = max(v, self.__n)
         if type(v) == str:
             if not v in self.__v_name_to_idx:
-                self.__v_idx_to_name[n] = v
-                self.__v_name_to_idx[v] = n
-                n += 1
-        
+                self.__v_idx_to_name[self.__n] = v
+                self.__v_name_to_idx[v] = self.__n
+                self.__n += 1
+        return True
 
+    def delete_edge(self, edge):
+        if type(edge) != tuple:
+            return False
+        try:
+            if type(edge[0]) == int:
+                i = edge[0]
+            else:
+                if not edge[0] in self.__v_name_to_idx:
+                    self.__v_name_to_idx[edge[0]] = self.__n
+                    self.__v_idx_to_name[self.__n] = edge[0]
+                    self.__n += 1
+                i = self.__v_name_to_idx[edge[0]]
+            if type(edge[1]) == int:
+                j = edge[1]
+            else:
+                if not edge[1] in self.__v_name_to_idx:
+                    self.__v_name_to_idx[edge[1]] = self.__n
+                    self.__v_idx_to_name[self.__n] = edge[1]
+                    self.__n += 1
+                j = self.__v_name_to_idx[edge[1]]
+            if len(edge) == 2:
+                idx_edge = (i, j)
+            else:
+                idx_edge = (i, j, edge[2])
+            if idx_edge in self.__adj:
+                self.__adj.remove(idx_edge)
+            if idx_edge in self.__edges:
+                self.__edges.remove(idx_edge)
+            if len(idx_edge) == 3:
+                revert_edge = (idx_edge[1], idx_edge[0], idx_edge[2])
+            else:
+                revert_edge = (idx_edge[1], idx_edge[0])
+            if revert_edge in self.__adj:
+                self.__adj.remove(revert_edge)
+            self.__m = len(self.__edges)
+            return True
+        except:
+            return False
 
-g = Graph(n=2, m=2, adj=[(0, 1), (1,0)])
-print(g.get_n())
-g.set_n(3)
-print( g.get_n())
-print (g.set_n(3))
-print (g.set_m(2))
-print (g.set_adj([(0, 1), (1,0), (2, 3)]))
-print( g.get_n())
-print( g.get_m())
-print (len((0, 1)))
-print (g.set_names_adj([(0, 1), (1,0), (2, 3)]))
-print( g.get_n())
-print( g.get_m())
-print (g.get_v_idx_to_name())
+    def get_idx(self, name):
+        if type(name) is str and name in self.__v_name_to_idx:
+            return self.__v_name_to_idx[name]
+        else:
+            return -1
+
+    def get_name(self, idx):
+        if type(idx) is int and idx in self.__v_idx_to_name:
+            return self.__v_idx_to_name[idx]
+        else:
+            return ''
+
+    def get_matrix_adj(self):
+        result = []
+        for _ in range(self.__n):
+            result.append([])
+        for edge in self.__adj:
+            result[edge[0]].append(edge[1])
+        return result
 
 
