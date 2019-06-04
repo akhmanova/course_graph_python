@@ -99,7 +99,7 @@ class Graph:
         for (i, j) in self.__adj:
             if i >= n or j >= n:
                 return False
-        self.__n = deepcopy(n)
+        self.__n = n
         return True
 
     def set_m(self, m):
@@ -109,31 +109,18 @@ class Graph:
             return False
         if m < 0 or len(self.__adj) != m:
             return False
-        self.__m = deepcopy(m)
+        self.__m = m
         return True
 
     def set_edges(self, adj):
-        try:
-            adj = list(adj)
-            if len(adj) > 0 and len(adj[0]) == 3 or self.__weight:
-                for (i, j, v) in adj:
-                    if i < 0 or j < 0 or type(i) != int or type(j) != int or type(v) != int:
-                        raise Exception
-            elif len(adj) > 0 and len(adj[0]) == 2:
-                for (i, j) in adj:
-                    if i < 0 or j < 0 or type(i) != int or type(j) != int:
-                        raise Exception
-        except Exception:
-            return False
         self.__m = 0
         self.__n = 0
         self.__adj = []
         self.__edges = []
 
         for i in adj:
-            result = self.add_edge(i)
-            if not result:
-                return False
+            self.add_edge(i)
+        self.__m = len(self.__edges)
         return True
 
     def set_v_name_to_idx(self, v_name_to_idx):
@@ -188,47 +175,56 @@ class Graph:
             return True
         except:
             return False
-    
+
     def add_edge(self, edge):
-        if type(edge) != tuple:
+        if type(edge) is not tuple:
             return False
+        if type(edge[0]) is int:
+            self.__n = max(self.__n, edge[0] + 1, edge[1] + 1)
+            return self.add_edge_idx(edge)
+        return self.add_edge_str(edge)
+
+    def add_edge_str(self, edge):
+        if edge[0] not in self.__v_name_to_idx:
+            while self.__n in self.__v_idx_to_name:
+                self.__n += 1
+            idx0 = self.__n
+            self.__v_name_to_idx[edge[0]] = idx0
+            self.__v_idx_to_name[idx0] = edge[0]
+            self.__n += 1
+        else:
+            idx0 = self.__v_name_to_idx[edge[0]]
+        if edge[1] not in self.__v_name_to_idx:
+            while self.__n in self.__v_idx_to_name:
+                self.__n += 1
+            idx1 = self.__n
+            self.__v_name_to_idx[edge[1]] = idx1
+            self.__v_idx_to_name[idx1] = edge[1]
+            self.__n += 1
+        else:
+            idx1 = self.__v_name_to_idx[edge[1]]
+        if len(edge) is 3:
+            result = (idx0, idx1, edge[2])
+        else:
+            result = (idx0, idx1)
+        return self.add_edge_idx(result)
+
+    def add_edge_idx(self, edge):
         try:
-            if len(edge) == 3 and not self.__weight:
-                self.set_weight(True)
-
-            if type(edge[0]) == int:
-                i = edge[0]
-            else:
-                if not edge[0] in self.__v_name_to_idx:
-                    self.__v_name_to_idx[edge[0]] = self.__n
-                    self.__v_idx_to_name[self.__n] = edge[0]
-                    self.__n += 1
-                i = self.__v_name_to_idx[edge[0]]
-            if type(edge[1]) == int:
-                j = edge[1]
-            else:
-                if not edge[1] in self.__v_name_to_idx:
-                    self.__v_name_to_idx[edge[1]] = self.__n
-                    self.__v_idx_to_name[self.__n] = edge[1]
-                    self.__n += 1
-                j = self.__v_name_to_idx[edge[1]]
+            while self.__n in self.__v_idx_to_name:
+                self.__n += 1
+            self.__n = max(self.__n, edge[0] + 1, edge[1] + 1)
+            idx = [min(edge[0], edge[1]), max(edge[0], edge[1])]
             if len(edge) == 2:
-                idx_edge = (i, j)
+                res = (idx[0], idx[1])
             else:
-                idx_edge = (i, j, edge[2])
-
-            self.__n = max(self.__n, idx_edge[0] + 1, idx_edge[1] + 1)
-            self.__adj.append(idx_edge)
-            self.__edges.append(idx_edge)
-            self.__m += 1
-            if not self.__oriented:
-                if len(idx_edge) == 3:
-                    revert_edge = (idx_edge[1], idx_edge[0], idx_edge[2])
-                else:
-                    revert_edge = (idx_edge[1], idx_edge[0])
-                self.__adj.append(revert_edge)
-            self.add_vertex(idx_edge[0])
-            self.add_vertex(idx_edge[1])
+                res = (idx[0], idx[1], edge[2])
+            if not self.__oriented and  res not in self.__edges:
+                self.__edges.append(res)
+                self.__m = len(self.__edges)
+            if self.__oriented and edge not in self.__edges:
+                self.__edges.append(edge)
+                self.__m = len(self.__edges)
             return True
         except:
             return False
@@ -237,7 +233,7 @@ class Graph:
         if type(v) != int or type(v) != str:
             return False
         if type(v) == int:
-            self.__n = max(v, self.__n)
+            self.__n = max(v + 1, self.__n)
         if type(v) == str:
             if not v in self.__v_name_to_idx:
                 self.__v_idx_to_name[self.__n] = v
@@ -300,8 +296,10 @@ class Graph:
         result = []
         for _ in range(self.__n):
             result.append([])
-        for edge in self.__adj:
+        for edge in self.__edges:
             result[edge[0]].append(edge[1])
+            if not self.__oriented:
+                result[edge[1]].append(edge[0])
         return result
 
 
