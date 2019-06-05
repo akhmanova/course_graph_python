@@ -3,6 +3,25 @@ from collections import deque
 
 
 # helpful functions
+def bfs(s, t, parent, graph, g, n, m):
+    INF = 1000000000
+    edges = graph.get_edges()
+    used = []
+    for _ in range(n):
+        used.append(False)
+    queue = deque()
+    queue.append(s)
+    used[s] = True
+    while len(queue) > 0:
+        u = queue.popleft()
+        for idx, val in enumerate(g[u]):
+            if not used[idx] and val > 0:
+                queue.append(idx)
+                used[idx] = True
+                parent[idx] = u
+    return used[t], parent
+
+
 def is_connected(g):
     n = g.get_n()
     if n is 0:
@@ -163,10 +182,11 @@ def prim(graph):
     res = []
     edges = graph.get_edges()
     n = graph.get_n()
-    g = []
+
     INF = 1000000000
     min_edge = []
     sel_edge = [] # end of edge
+    g = []
     for i in range(n):
         g.append([])
         min_edge.append(INF)
@@ -200,7 +220,6 @@ def prim(graph):
 # IVa Dijkstra
 # 17 list of all shortest ways
 def deijksta(graph):
-    res = []
     n = graph.get_n()
     g = []
     INF = 1000000000
@@ -237,6 +256,106 @@ def deijksta(graph):
 
 
 # IV ford_bellman
-# get k-shortest ways from v to u
-def ford_bellman(g, k, v, u):
+# 22) get k-shortest ways from v to u
+def ford_bellman(graph, k, v, u):
+    n = graph.get_n()
+    m = graph.get_m()
+    INF = 1000000000
+    edges = graph.get_edges()
+
+    d = []
+    for _ in range(n):
+        d.append([INF])
+    d[v][0] = 0
+    while True:
+        flag_any = False
+        for j in range(m):
+            if d[edges[j][0]][0] < INF:
+                new_val = d[edges[j][0]][0] + edges[j][2]
+                if d[edges[j][0]][0] > new_val:
+                    flag_any = True
+                for kk in range(len(d[edges[j][0]])):
+                    new_val = d[edges[j][0]][kk] + edges[j][2]
+
+                    if d[edges[j][1]][0] > new_val:
+                        if new_val not in d[edges[j][1]]:
+                            d[edges[j][1]].append(new_val)
+                            d[edges[j][1]].sort()
+                            for idx, dd in enumerate(d[edges[j][1]]):
+                                if idx >= k:
+                                    d[edges[j][1]].remove(dd)
+                    elif new_val not in d[edges[j][1]]:
+                        d[edges[j][1]].append(new_val)
+                        d[edges[j][1]].sort()
+                        for idx, dd in enumerate(d[edges[j][1]]):
+                            if idx >= k:
+                                d[edges[j][1]].remove(dd)
+        if not flag_any:
+            break
+    return d[u]
+
+
+# IV ford_bellman
+# 8 get set of u, where ro(v, u) <= n
+def ford_bellman_find_set(graph, v, max_n):
+    n = graph.get_n()
+    m = graph.get_m()
+    INF = 1000000000
+    edges = graph.get_edges()
+
+    d = []
+    for _ in range(n):
+        d.append(INF)
+    d[v] = 0
+    while True:
+        flag_any = False
+        for j in range(m):
+            if d[edges[j][0]] < INF:
+                    if d[edges[j][1]] > d[edges[j][0]] + edges[j][2]:
+                        d[edges[j][1]] = d[edges[j][0]] + edges[j][2]
+                        flag_any = True
+        if not flag_any:
+            break
+    res = []
+    for idx, i in enumerate(d):
+        if i <= max_n:
+            res.append(idx)
+    return res
+
+
+###################################################
+# V Ford Fulkerson
+# Find the maximum possible flow
+def ford_fulkerson(graph, source, sink):
+    n = graph.get_n()
+    m = graph.get_m()
+    INF = 1000000000
+    edges = graph.get_edges()
+    g = []
+    for i in range(n):
+        g.append([])
+        for j in range(n):
+            g[i].append(0)
+    for i in edges:
+        g[i[0]][i[1]] = i[2]
+    parent = [-1] * n
+    max_flow = 0
+    flag, parent = bfs(source, sink, parent, graph, g, n, m)
+    while flag:
+        path = INF
+        s = sink
+        while s is not source:
+            path = min(path, g[parent[s]][s])
+            s = parent[s]
+        max_flow += path
+        v = sink
+        while v is not source:
+            u = parent[v]
+            g[u][v] -= path
+            g[v][u] += path
+            v = parent[v]
+        flag, parent = bfs(source, sink, parent, graph, g, n, m)
+    return max_flow
+
+
 

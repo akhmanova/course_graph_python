@@ -103,7 +103,6 @@ g.set_oriented(False)
 g.set_n(6)
 print(deijksta(g))
 
-# None
 g = Graph()
 g.set_oriented(False)
 g.set_edges([
@@ -122,5 +121,43 @@ assert \
     ],\
     deijksta(g)
 
+# IV ford_bellman
+# 22) get k-shortest ways from v to u
+g = Graph()
+g.set_oriented(False)
+g.set_edges([
+    (0, 1, 100), (0, 5, 100), (1, 2, 100), (1, 5, 5), (1, 5, 3),
+    (2, 3, 100), (2, 5, 5), (3, 5, 5), (3, 4, 100), (4, 5, 100)
+])
+g.set_n(6)
+g.set_m(10)
+assert [100, 103], ford_bellman(g, 2, 0, 5)
+
+# IV ford_bellman
+# 8 get set of u, where ro(v, u) <= n
+g = Graph()
+g.set_oriented(False)
+g.set_edges([
+    (0, 1, 100), (0, 5, 100), (1, 2, 100), (1, 5, 5), (1, 5, 3),
+    (2, 3, 100), (2, 5, 5), (3, 5, 5), (3, 4, 100), (4, 5, 100)
+])
+g.set_n(6)
+g.set_m(10)
+assert [0, 1, 2, 5], ford_bellman_find_set(g, 0, 200)
 
 
+###################################################
+# V Ford Fulkerson
+# Find the maximum possible flow
+g = Graph()
+g.set_oriented(True)
+g.set_edges([
+    (0, 1, 16), (0, 2, 13),
+    (1, 2, 10), (1, 3, 12),
+    (2, 1, 4), (2, 4, 14),
+    (3, 2, 9), (3, 5, 20),
+    (4, 3, 7), (4, 5, 4)
+])
+g.set_n(6)
+g.set_m(10)
+assert 23, ford_fulkerson(graph=g, source=0, sink=5)
