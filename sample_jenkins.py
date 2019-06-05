@@ -27,7 +27,7 @@ def get_all_paths():
                     temp_list.append(temp_name)
         if len(temp_list) > 3:
             list_adj.append((temp_list[-3], temp_list[-1]))
-            reverse_list.append((temp_list[-1], temp_list[-3]))
+            reverse_list.append((temp_list[-3], temp_list[-1]))
             if temp_list[-3] not in list_jobs:
                 list_jobs.append(temp_list[-3])
             if temp_list[-1] not in list_jobs:
@@ -35,7 +35,7 @@ def get_all_paths():
     jen_graph = Graph()
     v_name = {}
     v_idx = {}
-    for i, j in enumerate(list_jobs):
+    for i, j in enumerate(reverse_list):
         v_name[j] = i
         v_idx[i] = j
     jen_graph.set_v_name_to_idx(v_name)
@@ -50,7 +50,9 @@ def get_all_paths():
 
     result_path = {}
     for i in list_jobs:
-        result_path[i] =  reverse_graph.find_path(i)
+        result_path[i] = reverse_graph.find_path(i)
+    print('REVERSE', reverse_list)
+    print(reverse_graph.get_v_idx_to_name())
     return result_path
 
 

@@ -321,13 +321,16 @@ class Graph:
         temp_path = []
         cur = v
         flag = True
+        temp_path.append(self.__v_idx_to_name[cur])
+
         while flag:
             flag = False
-            temp_path.append(self.__v_idx_to_name[cur])
             for i in self.__edges:
-                if i[0] == cur:
+                if i[1] == cur:
                     flag = True
-                    cur = i[1]
+                    cur = i[0]
+                    temp_path.append(self.__v_idx_to_name[cur])
+
         temp_path.reverse()
         return temp_path
 
