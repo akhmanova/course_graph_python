@@ -38,33 +38,31 @@ class Graph:
     #           v_name_to_idx=<{'apple'=1, 'pear'=2}>
     #           v_idx_to_name=<{1='apple', 2='pear'}>
     #           oriented=<False or True>
-    def __init__(self, **kwargs):
+    def __init__(self, kwargs={}):
 
         # Copy from original graph
         if 'original_graph' in kwargs:
-            self.__n = deepcopy(kwargs.original_graph.n)
-            self.__m = deepcopy(kwargs.original_graph.m)
-            self.__adj = deepcopy(kwargs.original_graph.adj)
-            self.__edges = deepcopy(kwargs.original_graph.edges)
-            self.__v_name_to_idx = deepcopy(kwargs.original_graph.v_name_to_idx)
-            self.__v_idx_to_name = deepcopy(kwargs.original_graph.v_idx_to_name)
+            self.__n = deepcopy(kwargs.get('original_graph').get_n())
+            self.__m = deepcopy(kwargs.get('original_graph').get_m())
+            self.__adj = deepcopy(kwargs.get('original_graph').get_adj())
+            self.__edges = deepcopy(kwargs.get('original_graph').get_edges())
+            self.__v_name_to_idx = deepcopy(kwargs.get('original_graph').get_v_name_to_idx())
+            self.__v_idx_to_name = deepcopy(kwargs.get('original_graph').get_v_idx_to_name())
             print ("A class was created from the sample!")
             return 
         
         if 'n' in kwargs:
-            self.__n = deepcopy(kwargs.get('n'))
+            self.set_n(deepcopy(kwargs.get('n')))
         if 'm' in kwargs:
-            self.__m = deepcopy(kwargs.get('m'))
-        if 'adj' in kwargs:
-            self.__adj = deepcopy(kwargs.get('adj'))
+            self.set_m(deepcopy(kwargs.get('m')))
         if 'edges' in kwargs:
-            self.__edges = deepcopy(kwargs.get('edges'))
+            self.set_edges(deepcopy(kwargs.get('edges')))
         if 'v_name_to_idx' in kwargs:
-            self.__v_name_to_idx = deepcopy(kwargs.get('v_name_to_idx'))
+            self.set_v_name_to_idx(deepcopy(kwargs.get('v_name_to_idx')))
         if 'v_idx_to_name' in kwargs:
-            self.__v_idx_to_name = deepcopy(kwargs.get('v_idx_to_name'))
+            self.set_v_idx_to_name(deepcopy(kwargs.get('v_idx_to_name')))
         if 'oriented' in kwargs:
-            self.__oriented = deepcopy(kwargs.get('oriented'))
+            self.set_oriented(deepcopy(kwargs.get('oriented')))
 
         print("New class was created!")
 
@@ -230,16 +228,14 @@ class Graph:
             return False
 
     def add_vertex(self, v):
-        if type(v) != int or type(v) != str:
+
+        if not v in self.__v_name_to_idx:
+            self.__v_idx_to_name[self.__n] = v
+            self.__v_name_to_idx[v] = self.__n
+            self.set_n(self.__n + 1)
+            return True
+        else:
             return False
-        if type(v) == int:
-            self.__n = max(v + 1, self.__n)
-        if type(v) == str:
-            if not v in self.__v_name_to_idx:
-                self.__v_idx_to_name[self.__n] = v
-                self.__v_name_to_idx[v] = self.__n
-                self.__n += 1
-        return True
 
     def delete_edge(self, edge):
         if type(edge) != tuple:
@@ -280,6 +276,22 @@ class Graph:
         except:
             return False
 
+    def delete_vertex(self, v):
+        if type(v) is str:
+            if v not in self.__v_name_to_idx:
+                return False
+            v = self.__v_name_to_idx[v]
+        if v >= self.__n:
+            return False
+
+        for i in self.__edges:
+            if i[0] is v or i[1] is v:
+                self.delete_edge(i)
+        if v in self.__v_idx_to_name:
+            self.__v_name_to_idx.pop(self.__v_idx_to_name[v])
+            self.__v_idx_to_name.pop(v)
+        return True
+
     def get_idx(self, name):
         if type(name) is str and name in self.__v_name_to_idx:
             return self.__v_name_to_idx[name]
@@ -301,5 +313,23 @@ class Graph:
             if not self.__oriented:
                 result[edge[1]].append(edge[0])
         return result
+
+    def find_path(self, v):
+        if type(v) is str:
+            v = self.__v_name_to_idx[v]
+
+        temp_path = []
+        cur = v
+        flag = True
+        while flag:
+            flag = False
+            temp_path.append(self.__v_idx_to_name[cur])
+            for i in self.__edges:
+                if i[0] == cur:
+                    flag = True
+                    cur = i[1]
+        temp_path.reverse()
+        return temp_path
+
 
 
