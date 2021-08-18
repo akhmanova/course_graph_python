@@ -458,9 +458,7 @@ def update_main_repo(env_data, repo_dir, tmpdir, new_dep_commits, dep_repo):
         dep_version = get_pseudo_version(dep_repo, new_dep_commits[0])
 
         with open(os.path.join(repo_dir, "go.mod"), "r") as f:
-            base_gomod_file = [
-                line for line in f.read().split("\n") if not line.startswith("require")
-            ]
+            base_gomod_file = [line for line in f.read().split("\n")]
         with open(os.path.join(repo_dir, "go.mod"), "w+") as f:
             for line in base_gomod_file:
                 f.write(f"{line}\n")
