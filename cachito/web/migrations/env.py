@@ -89,15 +89,6 @@ def run_migrations_online():
             context.run_migrations()
 
 
-# Refer to: https://alembic.sqlalchemy.org/en/latest/cookbook.html#don-t-generate-any-drop-table-directives-with-autogenerate
-def include_object(object, name, type_, reflected, compare_to):
-    excluded_tables = ("package", "request_package", "request_dependency")
-    if type_ == "table" and reflected and compare_to is None and name in excluded_tables:
-        return False
-    else:
-        return True
-
-
 if context.is_offline_mode():
     run_migrations_offline()
 else:
